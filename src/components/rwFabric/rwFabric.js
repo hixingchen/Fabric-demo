@@ -1,7 +1,7 @@
 import {
 	fabric
 } from "fabric";
-
+import gifuct from "./gifuct-js.js"
 export default class rwFabric {
 
 	//new初始化，这个方法都会走
@@ -89,6 +89,24 @@ export default class rwFabric {
 			}
 		}
 	}
+	
+	//静止操作对象
+	lockObject(obj){
+		//静止旋转和移动，放大
+		obj.setControlsVisibility({
+			mt: false,
+			mb: false,
+			mr: false,
+			ml: false,
+			tl: false,
+			tr: false,
+			bl: false,
+			br: false,
+			mtr: false
+		})
+		obj.lockMovementX = true
+		obj.lockMovementY = true
+	}
 
 	// =======================创建对象=====================================//
 	//创建文本
@@ -154,23 +172,6 @@ export default class rwFabric {
 			that._canvas.add(group)
 		})
 	}
-	//静止操作对象
-	lockObject(obj){
-		//静止旋转和移动，放大
-		obj.setControlsVisibility({
-			mt: false,
-			mb: false,
-			mr: false,
-			ml: false,
-			tl: false,
-			tr: false,
-			bl: false,
-			br: false,
-			mtr: false
-		})
-		obj.lockMovementX = true
-		obj.lockMovementY = true
-	}
 
 	//创建图标
 	createSvgImg(opt) {
@@ -203,6 +204,120 @@ export default class rwFabric {
 			that._canvas.add(oImg)
 		})
 	}
+	
+	//播放gif
+	createGif(opt) {
+		var that = this;
+		var url = opt.imgUrl;
+		fabric.Image.fromURL(url, function(img) {
+			img.width = opt.width;
+			img.height = opt.height;
+			img.left = opt.left;
+			img.top = opt.top;
+			img.scaleX = opt.scaleX;
+			img.scaleY = opt.scaleY;
+			img.id = opt.id;
+			img.zindex = opt.zindex; //目前参数无效
+			img.set({
+				transparentCorners: false,
+				cornerColor: 'blue',
+				cornerStrokeColor: 'red',
+				borderColor: 'red',
+				cornerSize: 12,
+				padding: 10,
+				cornerStyle: 'circle',
+				borderDashArray: [3, 3]
+			});
+
+			gif(url, function(frames, delay) {
+				var framesIndex = 0,
+					animInterval;
+				img.dirty = true;
+				img._render = function(ctx) {
+					ctx.drawImage(frames[framesIndex], -this.width / 2, -this.height / 2, this
+						.width, this.height);
+				}
+				img.play = function() {
+					if (typeof(animInterval) === 'undefined') {
+						animInterval = setInterval(function() {
+							framesIndex++;
+							if (framesIndex === frames.length) {
+								framesIndex = 0;
+							}
+						}, delay);
+					}
+				}
+				img.stop = function() {
+					clearInterval(animInterval);
+					animInterval = undefined;
+				}
+				img.play();
+				that._canvas.add(img);
+			})
+		})
+
+
+		function gif(url, callback) {
+			var tempCanvas = document.createElement('canvas');
+			var tempCtx = tempCanvas.getContext('2d');
+			var gifCanvas = document.createElement('canvas');
+			var gifCtx = gifCanvas.getContext('2d');
+			var imgs = [];
+			var xhr = new XMLHttpRequest();
+			xhr.open('get', url, true);
+			xhr.responseType = 'arraybuffer';
+			xhr.onload = function() {
+				var tempBitmap = {};
+				tempBitmap.url = url;
+				var arrayBuffer = xhr.response;
+				if (arrayBuffer) {
+					var gif = new GIF(arrayBuffer);
+					var frames = gif.decompressFrames(true);
+					gifCanvas.width = frames[0].dims.width;
+					gifCanvas.height = frames[0].dims.height;
+
+					for (var i = 0; i < frames.length; i++) {
+						createFrame(frames[i]);
+					}
+					callback(imgs, frames[0].delay);
+				}
+
+			}
+			xhr.send(null);
+			var disposalType;
+
+			function createFrame(frame) {
+				if (!disposalType) {
+					disposalType = frame.disposalType;
+				}
+				var dims = frame.dims;
+				tempCanvas.width = dims.width;
+				tempCanvas.height = dims.height;
+				var frameImageData = tempCtx.createImageData(dims.width, dims.height);
+				frameImageData.data.set(frame.patch);
+				if (disposalType !== 1) {
+					gifCtx.clearRect(0, 0, gifCanvas.width, gifCanvas.height);
+				}
+				tempCtx.putImageData(frameImageData, 0, 0);
+				gifCtx.drawImage(tempCanvas, dims.left, dims.top);
+				var dataURL = gifCanvas.toDataURL('image/png');
+				var tempImg = fabric.util.createImage();
+				tempImg.src = dataURL;
+				imgs.push(tempImg);
+			}
+		}
+		render()
+		
+		function render() {
+		  if (that._canvas) {
+		    that._canvas.renderAll();
+		  }
+		
+		  fabric.util.requestAnimFrame(render);
+		}
+	}
+	
+
 
 	// =======================创建事件=====================================//
 	/**拖东事件

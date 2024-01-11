@@ -21,6 +21,9 @@
 			setTimeout(()=>{
 				this.init()
 			})
+			setTimeout(()=>{
+				this.createGif()
+			},2000)
 		},
 		watch:{},
 		methods:{
@@ -60,6 +63,18 @@
 					"textLeft": 44,
 					"textAngle": 0, //旋转角度
 					"selectable":true
+				})
+			},
+			createGif(){
+				this.rwFabric.createGif({
+					imgUrl:"https://p1.itc.cn/q_70/images01/20210718/1fd848ea44574476963498a23c6d0ca4.gif",
+					width:200,
+					height:200,
+					scaleX:1,
+					scaleY:1,
+					left:0,
+					top:0,
+					id:'123'
 				})
 			}
 		}
