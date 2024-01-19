@@ -92,18 +92,9 @@ export default class rwFabric {
 	
 	//静止操作对象
 	lockObject(obj){
-		//静止旋转和移动，放大
-		obj.setControlsVisibility({
-			mt: false,
-			mb: false,
-			mr: false,
-			ml: false,
-			tl: false,
-			tr: false,
-			bl: false,
-			br: false,
-			mtr: false
-		})
+		obj.hasBorders = false //不显示选中时的边
+		obj.hasControls = false //不显示选中时的9个方块
+		//静止移动
 		obj.lockMovementX = true
 		obj.lockMovementY = true
 	}
