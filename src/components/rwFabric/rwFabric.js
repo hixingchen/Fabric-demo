@@ -307,6 +307,24 @@ export default class rwFabric {
 		  fabric.util.requestAnimFrame(render);
 		}
 	}
+
+
+	/**
+	 * 重置层级
+	 */
+	resetLayer(){
+		function sortByValue(propName) {
+			return function(a, b) {
+			return a[propName] - b[propName];
+			};
+		}
+		let objects = this._canvas.getObjects()
+		objects.sort(sortByValue('objIndex'))//根据objIndex排序，objIndex就是自定义的层级字段
+		for (var i = 0; i < objects.length; i++) {
+			objects[i].moveTo(i)
+		}
+		this.renderAll()
+	}
 	
 
 
